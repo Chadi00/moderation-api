@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"moderation_api/routes"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,5 +15,10 @@ func main() {
 
 	routes.GenerateRoutes(server)
 
-	server.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	server.Run(":" + port)
 }
