@@ -9,8 +9,8 @@ def download_video(url, path):
         stream.download(output_path=path)
         print("Download successful")
     except Exception as e:
-        print(f"An error occurred: {e}")
-        raise  # Optionally re-raise the exception if you want to handle it further
+        print(f"An error occurred: {e}", file=sys.stderr)
+        sys.exit(1)  # Exit with status 1 to indicate an error
 
 if __name__ == "__main__":
     download_video(sys.argv[1], sys.argv[2])
