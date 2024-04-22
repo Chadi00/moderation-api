@@ -5,5 +5,5 @@ import "github.com/gin-gonic/gin"
 func GenerateRoutes(server *gin.Engine) {
 	server.GET("/hello", hello)
 
-	server.GET("/moderate", moderation)
+	server.GET("/analyze-video", analyzeVideo)
 }

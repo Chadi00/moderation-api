@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"moderation_api/routes"
 	"os"
 
@@ -9,7 +8,6 @@ import (
 )
 
 func main() {
-	fmt.Print("Hello World")
 
 	server := gin.Default()
 
