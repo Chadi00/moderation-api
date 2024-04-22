@@ -7,3 +7,4 @@ func GenerateRoutes(server *gin.Engine) {
 
 	server.GET("/analyze-video", analyzeVideo)
 }
+
