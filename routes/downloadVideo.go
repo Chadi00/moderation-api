@@ -13,7 +13,7 @@ func downloadVideo(videoURL string, outputPath string) error {
 	fmt.Println("Output Path:", outputPath)
 
 	// Specify the full path to the Python executable
-	cmd := exec.Command("/Library/Frameworks/Python.framework/Versions/3.12/bin/python3", "utils/downloadVideo.py", videoURL, outputPath)
+	cmd := exec.Command("python", "utils/downloadVideo.py", videoURL, outputPath)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

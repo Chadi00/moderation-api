@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"moderation_api/models"
 	"net/http"
 	"net/url"
@@ -30,6 +31,7 @@ func analyzeVideo(ctx *gin.Context) {
 	}
 
 	outputPath := filepath.Join("downloads")
+	fmt.Println("Output path is : ", outputPath)
 
 	err = downloadVideo(req.VideoURL, outputPath)
 	if err != nil {
