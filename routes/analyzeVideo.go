@@ -30,16 +30,34 @@ func analyzeVideo(ctx *gin.Context) {
 		return
 	}
 
-	outputPath := filepath.Join("downloads")
+	outputPath := filepath.Join("/app/downloads")
 	fmt.Println("Output path is : ", outputPath)
 
-	err = downloadVideo(req.VideoURL, outputPath)
+	videoPath, err := downloadVideo(req.VideoURL, outputPath)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Error when trying to download the video, make sure it's a valid youtube url"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"Video URL": req.VideoURL})
+	numberFrames, err := captureFrames(videoPath)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Error when trying to capture frames"})
+		return
+	}
+
+	audioPath, err := extractAudio(videoPath)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Error when trying to extract audio"})
+		return
+	}
+
+	err = deleteVideo(videoPath)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Error when trying to delete video"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"Video URL": req.VideoURL, "Number of frames": numberFrames, "Audio path": audioPath})
 }
 
 // make sure VideoURL is a valid url for youtube and tiktok videos
