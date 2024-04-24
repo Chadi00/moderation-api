@@ -11,14 +11,15 @@ import (
 func captureFrames(videoPath string) (int, error) {
 	// Define the output path for frames
 	framesPath := filepath.Join("/app/downloads", "frames")
+	fmt.Println("Creating frames directory...")
 
 	// Ensure the frames directory exists
 	if err := os.MkdirAll(framesPath, 0755); err != nil {
 		return 0, fmt.Errorf("failed to create frames directory: %v", err)
 	}
 
+	fmt.Println("Running FFmpeg command...")
 	// Define the FFmpeg command to run
-	// Using the select filter to detect scene changes with a threshold of 0.4
 	cmd := exec.Command("ffmpeg",
 		"-i", videoPath,
 		"-vf", "select='gt(scene,0.4)'",
@@ -28,7 +29,8 @@ func captureFrames(videoPath string) (int, error) {
 	)
 
 	// Run the FFmpeg command
-	if output, err := cmd.CombinedOutput(); err != nil {
+	output, err := cmd.CombinedOutput()
+	if err != nil {
 		return 0, fmt.Errorf("ffmpeg failed: %v, output: %s", err, string(output))
 	}
 
@@ -38,6 +40,12 @@ func captureFrames(videoPath string) (int, error) {
 		return 0, fmt.Errorf("failed to read frames directory: %v", err)
 	}
 
-	// Return the number of frames
+	fmt.Printf("Processing %d frames...\n", len(files))
+	for _, file := range files {
+		framePath := filepath.Join(framesPath, file.Name())
+		go analyzeFrame(framePath) // Call analyzeFrame in a goroutine for concurrency
+	}
+
+	// Return the number of frames processed
 	return len(files), nil
 }
