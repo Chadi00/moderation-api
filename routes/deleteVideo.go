@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// Delete video from the video path
 func deleteVideo(videoPath string) error {
 	// Attempt to delete the video file
 	err := os.Remove(videoPath)

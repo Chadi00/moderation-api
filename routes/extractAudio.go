@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 )
 
-// extractAudio extracts the audio from the video file and saves it as an MP3 file.
+// extracts the audio from the video file and saves it as an MP3 file, return the mp3 file path.
 func extractAudio(videoPath string) (string, error) {
-	// Define the output path for the audio file
+
 	audioPath := filepath.Join("/app/downloads", "audio")
 
 	// Ensure the audio directory exists

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// Detect scene changes in the video and capture frame at every change
 func captureFrames(videoPath string) (int, error) {
 	// Define the output path for frames
 	framesPath := filepath.Join("/app/downloads", "frames")

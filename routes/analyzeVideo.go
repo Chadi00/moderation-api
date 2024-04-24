@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Analyze video (with the audio of the audio) and return a moderation description of it
 func analyzeVideo(ctx *gin.Context) {
 	var req models.RequestBody
 

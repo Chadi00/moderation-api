@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// Download videos from youtube url and return the downloaded video path
 func downloadVideo(videoURL string, outputPath string) (string, error) {
 	fmt.Println("Starting download...")
 	fmt.Println("Video URL:", videoURL)
