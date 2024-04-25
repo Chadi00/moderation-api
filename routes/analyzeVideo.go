@@ -40,7 +40,7 @@ func analyzeVideo(ctx *gin.Context) {
 		return
 	}
 
-	numberFrames, err := captureFrames(videoPath)
+	videoDescription, err := captureFrames(videoPath)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Error when trying to capture frames"})
 		return
@@ -58,7 +58,19 @@ func analyzeVideo(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"Video URL": req.VideoURL, "Number of frames": numberFrames, "Audio path": audioPath})
+	transcript, err := transcriptAudio(audioPath)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "failed to transcript audio"})
+		return
+	}
+
+	rating, overallDescription, err := getVideoDescription(videoDescription, transcript)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to get video moderation description"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"Video rating": rating, "Moderation description": overallDescription})
 }
 
 // make sure VideoURL is a valid url for youtube and tiktok videos

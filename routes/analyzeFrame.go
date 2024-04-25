@@ -14,11 +14,12 @@ import (
 )
 
 // Analyze frame with AWS Rekognition for moderation
-func analyzeFrame(framePath string) {
+func analyzeFrame(framePath string) (string, error) {
 	fmt.Printf("Loading environment variables for frame: %s\n", framePath)
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
+		return "", fmt.Errorf("error loading .env file")
 	}
 
 	fmt.Println("Loading AWS configuration...")
@@ -27,6 +28,7 @@ func analyzeFrame(framePath string) {
 		config.WithRegion(os.Getenv("AWS_REGION")))
 	if err != nil {
 		log.Fatalf("unable to load SDK config, %v", err)
+		return "", fmt.Errorf("unable to load SDK config")
 	}
 
 	fmt.Printf("Creating Rekognition client for frame: %s\n", framePath)
@@ -38,6 +40,7 @@ func analyzeFrame(framePath string) {
 	imageBytes, err := os.ReadFile(framePath)
 	if err != nil {
 		log.Fatalf("failed to read image file, %v", err)
+		return "", fmt.Errorf("failed to read image file")
 	}
 
 	// Define the input parameters for the DetectModerationLabels operation
@@ -53,19 +56,20 @@ func analyzeFrame(framePath string) {
 	resp, err := svc.DetectModerationLabels(context.TODO(), input)
 	if err != nil {
 		log.Fatalf("failed to detect moderation labels, %v", err)
+		return "", fmt.Errorf("failed to detect moderation lables")
 	}
 
+	var moderationString string = ""
 	// After calling the DetectModerationLabels operation
-	if err != nil {
-		log.Fatalf("failed to detect moderation labels, %v", err)
+	if len(resp.ModerationLabels) == 0 {
+		fmt.Printf("No moderation labels detected for frame: %s\n", framePath)
 	} else {
-		if len(resp.ModerationLabels) == 0 {
-			fmt.Printf("No moderation labels detected for frame: %s\n", framePath)
-		} else {
-			fmt.Printf("Moderation labels detected for frame: %s\n", framePath)
-			for _, label := range resp.ModerationLabels {
-				fmt.Printf("Label: %s, Confidence: %.2f%%\n", *label.Name, *label.Confidence)
-			}
+		fmt.Printf("Moderation labels detected for frame: %s\n", framePath)
+		for _, label := range resp.ModerationLabels {
+			fmt.Printf("Label: %s, Confidence: %.2f%%\n", *label.Name, *label.Confidence)
+			moderationString = moderationString + "Label: " + *label.Name + ", Confidence: " + fmt.Sprintf("%f", *label.Confidence) + "\n"
 		}
 	}
+	return moderationString, nil
+
 }
