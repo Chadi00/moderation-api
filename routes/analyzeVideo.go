@@ -8,15 +8,27 @@ import (
 	"regexp"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 )
 
 type RequestBody struct {
 	VideoURL string `json:"VideoURL"`
 }
 
+func initRedis() *redis.Client {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "viaduct.proxy.rlwy.net:37481",
+		Password: "",
+		DB:       0,
+	})
+	return rdb
+}
+
 // Analyze video (with the audio of the audio) and return a moderation description of it
 func analyzeVideo(ctx *gin.Context) {
 	var req RequestBody
+
+	rdb := initRedis()
 
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -70,6 +82,17 @@ func analyzeVideo(ctx *gin.Context) {
 	rating, overallDescription, err := getVideoDescription(videoDescription, transcript)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to get video moderation description"})
+		return
+	}
+
+	fields := map[string]interface{}{
+		"rating":      rating,
+		"description": overallDescription,
+	}
+
+	_, err = rdb.HSet(req.VideoURL, "mod", fields).Result()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to save data to Redis"})
 		return
 	}
 
