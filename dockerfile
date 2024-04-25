@@ -38,7 +38,6 @@ COPY --from=builder /app/moderation-api .
 
 # Copy the rest of the necessary files
 COPY --from=builder /app/utils ./utils
-COPY --from=builder /app/models ./models
 COPY --from=builder /app/routes ./routes
 
 # Copy the .env file into the Docker image

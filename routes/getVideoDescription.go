@@ -45,7 +45,7 @@ func getVideoDescription(framesDescription string, transcript string) (string, s
 	requestBody1 := ChatRequest{
 		Model: "gpt-3.5-turbo",
 		Messages: []ChatMessage{
-			{Role: "system", Content: "You are a video moderation assistant, the user share with you moderation labels on the frames of the video (that can be empty) and transcription of the audio of the video. Your goal is to rate the video from 1 to 4. 1 being family friendly (for example a podcast about science). 2 being contains a few profanity, few violence or little nudity (for example a gameplay of gta5 or a streamer saying some profanity). 3 being contains a lot of explicit language, explicity nudity or a lot of violence, borderline (example an explicit rap music video). 4 being explicit content that should not be published (for example porn or gore videos). It is crucial that your response only contains the number and nothing else (for example '1' or '2' or '3' or '4')"},
+			{Role: "system", Content: "You are a video moderation assistant, the user share with you moderation labels on the frames of the video (that can be empty) and transcription of the audio of the video. Your goal is to respond with a rating from 1 to 4 (1 being family friendly, 2 being content that contains some profanity or a few violence, 3 being content that should be age restricted and 4 being explicit content that should not be published like porn or gore videos) and a moderation description of the video, saying if the video is a fit for anyone or if there is any explicit or implicit content or audio. You should describe why a video is family friendly or why it should not be published on public websites. It is crucial that you response begin with the rating then the video description separated by a pipe (|) for example '2|video description'"},
 			{Role: "user", Content: "Moderation labels : " + framesDescription + "\n Audio transcript : " + transcript},
 		},
 	}
@@ -76,56 +76,14 @@ func getVideoDescription(framesDescription string, transcript string) (string, s
 		return "", "", fmt.Errorf("failed to parse the response: %v", err)
 	}
 
-	// Extract content from the first response
+	// content from the first response
 	var content1 string
 	if len(chatResponse1.Choices) > 0 {
 		content1 = chatResponse1.Choices[0].Message.Content
 	}
 
-	// Setup request body
-	requestBody2 := ChatRequest{
-		Model: "gpt-3.5-turbo",
-		Messages: []ChatMessage{
-			{Role: "system", Content: "You are a video moderation assistant, the user share with you moderation labels on the frames of the video (that can be empty) and transcription of the audio of the video. Your goal is to respond with a moderation description of the video, saying if the video is a fit for anyone or if there is any explicit or implicit content or audio. You should describe why a video is family friendly or why it should not be published on public websites."},
-			{Role: "user", Content: "Moderation labels : " + framesDescription + "\n Audio transcript : " + transcript},
-		},
-	}
-
-	jsonData2, err := json.Marshal(requestBody2)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to marsher request number 1")
-	}
-
-	req2, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData2))
-	if err != nil {
-		return "", "", fmt.Errorf("failed to create new request number 1")
-	}
-
-	req2.Header.Set("Content-Type", "application/json")
-	req2.Header.Set("Authorization", "Bearer "+apiKey)
-
-	client2 := &http.Client{}
-	resp2, err := client2.Do(req2)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to send the request")
-	}
-	defer resp2.Body.Close()
-
-	var chatResponse2 ChatResponse
-	err = json.NewDecoder(resp2.Body).Decode(&chatResponse2)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to parse the response: %v", err)
-	}
-
-	// Extract content from the first response
-	var content2 string
-	if len(chatResponse2.Choices) > 0 {
-		content2 = chatResponse2.Choices[0].Message.Content
-	}
-
 	fmt.Println("rating : ", content1)
-	fmt.Println("description : ", content2)
 
-	return string(content1), string(content2), nil
+	return string(content1[0]), string(content1[2:]), nil
 
 }
