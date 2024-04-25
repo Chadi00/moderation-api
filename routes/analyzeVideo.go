@@ -2,7 +2,6 @@ package routes
 
 import (
 	"fmt"
-	"moderation_api/models"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -11,9 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type RequestBody struct {
+	VideoURL string `json:"VideoURL"`
+}
+
 // Analyze video (with the audio of the audio) and return a moderation description of it
 func analyzeVideo(ctx *gin.Context) {
-	var req models.RequestBody
+	var req RequestBody
 
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
