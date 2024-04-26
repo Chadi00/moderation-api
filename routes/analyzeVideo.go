@@ -1,34 +1,50 @@
 package routes
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
+	"github.com/joho/godotenv"
 )
+
+var rdb *redis.Client
+
+func init() {
+
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("not able to load .env")
+	}
+
+	REDISHOST := os.Getenv("REDISHOST")
+	REDISPASSWORD := os.Getenv("REDISPASSWORD")
+	REDISPORT := os.Getenv("REDISPORT")
+	REDISUSER := os.Getenv("REDISUSER")
+
+	// create Redis connection
+	rdb = redis.NewClient(&redis.Options{
+		Addr:     REDISHOST + ":" + REDISPORT,
+		Username: REDISUSER,
+		Password: REDISPASSWORD,
+		DB:       0,
+	})
+}
 
 type RequestBody struct {
 	VideoURL string `json:"VideoURL"`
 }
 
-func initRedis() *redis.Client {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "viaduct.proxy.rlwy.net:37481",
-		Password: "",
-		DB:       0,
-	})
-	return rdb
-}
-
-// Analyze video (with the audio of the audio) and return a moderation description of it
+// Analyze video (with the audio of the video) and return a moderation description of it
 func analyzeVideo(ctx *gin.Context) {
-	var req RequestBody
 
-	rdb := initRedis()
+	var req RequestBody
 
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -43,6 +59,18 @@ func analyzeVideo(ctx *gin.Context) {
 
 	if !isValidURL(req.VideoURL) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Error": "The video url is not valid, make sure it's a Youtube video url"})
+		return
+	}
+
+	ctxR := context.Background()
+	existingResults, err := rdb.HGetAll(ctxR, req.VideoURL).Result()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to retrieve data from Redis"})
+		return
+	}
+
+	if len(existingResults) > 0 {
+		ctx.JSON(http.StatusOK, existingResults)
 		return
 	}
 
@@ -85,18 +113,19 @@ func analyzeVideo(ctx *gin.Context) {
 		return
 	}
 
+	// map containing the rating and video moderation description
 	fields := map[string]interface{}{
 		"rating":      rating,
 		"description": overallDescription,
 	}
 
-	_, err = rdb.HSet(req.VideoURL, "mod", fields).Result()
+	_, err = rdb.HMSet(ctxR, req.VideoURL, fields).Result()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to save data to Redis"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"Error": "Failed to store data in Redis"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"Video rating": rating, "Moderation description": overallDescription})
+	ctx.JSON(http.StatusOK, fields)
 }
 
 // make sure VideoURL is a valid url for youtube and tiktok videos

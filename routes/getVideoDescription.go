@@ -76,7 +76,7 @@ func getVideoDescription(framesDescription string, transcript string) (string, s
 		return "", "", fmt.Errorf("failed to parse the response: %v", err)
 	}
 
-	// content from the first response
+	// content from the response
 	var content1 string
 	if len(chatResponse1.Choices) > 0 {
 		content1 = chatResponse1.Choices[0].Message.Content

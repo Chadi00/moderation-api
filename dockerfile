@@ -40,9 +40,6 @@ COPY --from=builder /app/moderation-api .
 COPY --from=builder /app/utils ./utils
 COPY --from=builder /app/routes ./routes
 
-# Copy the .env file into the Docker image
-COPY --from=builder /app/.env ./
-
 # Ensure the downloads folder is available
 RUN mkdir -p downloads
 
